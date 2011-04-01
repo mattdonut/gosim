@@ -29,6 +29,13 @@ func (v *D3) Norm() float64 {
 	return math.Sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
 }
 
+func (v *D3) Zero() *D3 {
+	v.x = 0
+	v.y = 0
+	v.z = 0
+	return v
+}
+
 func (v *D3) Add(o *D3) *D3 {
 	return NewD3(  v.x + o.x,
 						v.y + o.y, 

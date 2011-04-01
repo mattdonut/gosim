@@ -46,8 +46,9 @@ func (rk *RK4) Init(chain *poly.Chain) {
 	rk.sys3 = poly.New(chain.GetLength())
 	rk.sys4 = poly.New(chain.GetLength())
 	rk.Mods = make([]Modifier, 1)
-	rk.Mods[0] = NewSpringForce(10)
-	rk.h = .01
+	rk.Mods[0] = NewSpringForce(100)
+	rk.Mods = append(rk.Mods, NewStiffForce(1))
+	rk.h = .003
 	rk.h2 = rk.h/2
 	rk.h6 = rk.h/6
 }
@@ -57,10 +58,10 @@ func (rk *RK4) Step() *poly.Chain {
 	for n := 0; n < 100 ; n ++ {
 	//clear the forces
 	for i, _ := range rk.Sys.Vel {
-		rk.Sys.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys2.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys3.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys4.Vel[i] = vector.NewD3(0,0,0)
+		rk.Sys.Vel[i].Zero()
+		rk.sys2.Vel[i].Zero()
+		rk.sys3.Vel[i].Zero()
+		rk.sys4.Vel[i].Zero()
 	}
 	//calculate forces at the initial point (k1)
 	for _, mod := range rk.Mods {
@@ -95,7 +96,7 @@ func (rk *RK4) Step() *poly.Chain {
 		rk.Sys.Loc[i] = rk.Sys.Loc[i].Add(rk.Sys.Vel[i].Add( rk.sys2.Vel[i].Add(rk.sys3.Vel[i]).Mul(2) ).Add( rk.sys4.Vel[i] ).Mul(rk.h6) )
 	}
 
-	}
+	}//end multiplicity loop
 	return rk.Sys
 }
 
@@ -113,10 +114,28 @@ func (mod *SpringForce) Act(in, out *poly.Chain) {
 		f1 = in.Loc[i].Sub(r)
 		f2 = r.Sub(in.Loc[i+2])
 		//out.Vel[i] = vector.NewD3(2,2,2)
-		out.Vel[i+1] = f1.Sub(f1.Normalize()).Sub(f2.Sub(f2.Normalize())).Mul(mod.k)
+		out.Vel[i+1] = out.Vel[i+1].Add(f1.Sub(f1.Normalize()).Sub(f2.Sub(f2.Normalize())).Mul(mod.k))
 	}
 	f1 = in.Loc[1].Sub(in.Loc[0])
 	f2 = in.Loc[len(in.Loc)-2].Sub(in.Loc[len(in.Loc)-1])
-	out.Vel[0] = f1.Sub(f1.Normalize()).Mul(mod.k)
-	out.Vel[len(in.Vel)-1] = f2.Sub(f2.Normalize()).Mul(mod.k)
+	out.Vel[0] = out.Vel[0].Add(f1.Sub(f1.Normalize()).Mul(mod.k))
+	out.Vel[len(in.Vel)-1] = out.Vel[len(in.Vel)-1].Add(f2.Sub(f2.Normalize()).Mul(mod.k))
+}
+type StiffForce struct {
+	k float64
+}
+func NewStiffForce(k float64) Modifier{
+	sf := new(StiffForce)
+	sf.k = k
+	return sf
+}
+func (mod *StiffForce) Act(in, out *poly.Chain) {
+	for i, _ := range in.Loc[2:len(in.Loc)-2] {
+		//note that i+2 is the index for the in.Loc array slice
+		out.Vel[i+2] = out.Vel[i+2].Add(in.Loc[i+2].Mul(2).Sub(in.Loc[i+4]).Sub(in.Loc[i]).Mul(mod.k))
+	}
+	out.Vel[1] = out.Vel[1].Add(in.Loc[1].Sub(in.Loc[3]).Mul(mod.k))
+	out.Vel[0] = out.Vel[0].Add(in.Loc[0].Sub(in.Loc[2]).Mul(mod.k))
+	out.Vel[len(out.Vel)-2] = out.Vel[len(out.Vel)-2].Add(in.Loc[len(out.Loc)-2].Sub(in.Loc[len(out.Loc)-4]).Mul(mod.k))
+	out.Vel[len(out.Vel)-1] = out.Vel[len(out.Vel)-1].Add(in.Loc[len(out.Loc)-1].Sub(in.Loc[len(out.Loc)-3]).Mul(mod.k))
 }
