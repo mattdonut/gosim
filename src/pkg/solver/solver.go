@@ -55,6 +55,13 @@ func (rk *RK4) Init(chain *poly.Chain) {
 func (rk *RK4) Step() *poly.Chain {
 	//take a step using RK4
 	for n := 0; n < 100 ; n ++ {
+	//clear the forces
+	for i, _ := range rk.Sys.Vel {
+		rk.Sys.Vel[i] = vector.NewD3(0,0,0)
+		rk.sys2.Vel[i] = vector.NewD3(0,0,0)
+		rk.sys3.Vel[i] = vector.NewD3(0,0,0)
+		rk.sys4.Vel[i] = vector.NewD3(0,0,0)
+	}
 	//calculate forces at the initial point (k1)
 	for _, mod := range rk.Mods {
 		mod.Act(rk.Sys, rk.Sys)
@@ -87,13 +94,7 @@ func (rk *RK4) Step() *poly.Chain {
 	for i, _ := range rk.Sys.Loc {
 		rk.Sys.Loc[i] = rk.Sys.Loc[i].Add(rk.Sys.Vel[i].Add( rk.sys2.Vel[i].Add(rk.sys3.Vel[i]).Mul(2) ).Add( rk.sys4.Vel[i] ).Mul(rk.h6) )
 	}
-	//clear the forces
-	for i, _ := range rk.Sys.Vel {
-		rk.Sys.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys2.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys3.Vel[i] = vector.NewD3(0,0,0)
-		rk.sys4.Vel[i] = vector.NewD3(0,0,0)
-	}
+
 	}
 	return rk.Sys
 }

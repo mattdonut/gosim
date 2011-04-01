@@ -26,5 +26,5 @@ func main() {
 			blank.Print()
 		}
 	}
-	blank.Print()
+	fmt.Printf("End of the road")
 }
