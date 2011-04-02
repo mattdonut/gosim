@@ -42,7 +42,7 @@ func NewRandom(length int) *Chain {
 
 func (c *Chain) RandomLoc(origin *vector.D3) *Chain {
 	for index ,_ := range c.Loc {
-		c.Loc[index] = origin.Add(vector.RandomD3().Normalize().Mul(1.1))
+		c.Loc[index] = origin.Add(vector.RandomD3().Normalize())
 		origin = c.Loc[index]
 	}
 	return c
