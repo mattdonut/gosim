@@ -14,25 +14,6 @@ type Modifier interface {
 	Act(input, output *poly.Chain)
 }
 
-type Newton struct {
-	h float64
-	Sys *poly.Chain
-	Mod Modifier
-}
-
-func (newt *Newton) Init(chain *poly.Chain) {
-	newt.Sys = chain
-	newt.Mod = NewSpringForce(10)
-	newt.h = .001
-}
-
-func (newt *Newton) Step() *poly.Chain {
-	newt.Mod.Act(newt.Sys, newt.Sys)
-	for i, _ := range newt.Sys.Loc {
-		newt.Sys.Loc[i] = newt.Sys.Loc[i].Add(newt.Sys.Vel[i].Mul(newt.h))
-	}
-	return newt.Sys
-}
 
 type RK4 struct {
 	h,h2,h6 float64
