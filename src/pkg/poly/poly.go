@@ -80,3 +80,12 @@ func (c *Chain) Print() {
 //		fmt.Printf(value.String()+"\n")
 //	}
 }
+
+func (c *Chain) ToJSON() string {
+	output := "{"
+	for _, r := range c.Loc {
+		output += "[" + r.String() + "]" +","
+	}
+	output+= "}"
+	return output
+}
