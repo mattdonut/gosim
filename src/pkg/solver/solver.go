@@ -47,7 +47,10 @@ func (rk *RK4) Init(chain *poly.Chain) {
 	rk.sys4 = poly.New(chain.GetLength())
 	rk.Mods = make([]Modifier, 1)
 	rk.Mods[0] = NewSpringForce(100)
-	rk.Mods = append(rk.Mods, NewStiffForce(1))
+	rk.Mods = append(rk.Mods, NewStiffForce(10))
+	rk.Mods = append(rk.Mods, NewKinesinForce(1))
+	rk.Mods = append(rk.Mods, NewPinForce(100, 0, vector.NewD3(0,0,0)))
+	rk.Mods = append(rk.Mods, NewConstForce(vector.NewD3(0,0,1)))
 	rk.h = .003
 	rk.h2 = rk.h/2
 	rk.h6 = rk.h/6
@@ -138,4 +141,47 @@ func (mod *StiffForce) Act(in, out *poly.Chain) {
 	out.Vel[0] = out.Vel[0].Add(in.Loc[0].Sub(in.Loc[2]).Mul(mod.k))
 	out.Vel[len(out.Vel)-2] = out.Vel[len(out.Vel)-2].Add(in.Loc[len(out.Loc)-2].Sub(in.Loc[len(out.Loc)-4]).Mul(mod.k))
 	out.Vel[len(out.Vel)-1] = out.Vel[len(out.Vel)-1].Add(in.Loc[len(out.Loc)-1].Sub(in.Loc[len(out.Loc)-3]).Mul(mod.k))
+}
+type PinForce struct {
+	k float64
+	Target int
+	Loc *vector.D3
+}
+func NewPinForce(k float64, target int, loc *vector.D3) Modifier {
+	pf := new(PinForce)
+	pf.k = k
+	pf.Target = target
+	pf.Loc = loc
+	return pf
+}
+func (mod *PinForce) Act(in, out *poly.Chain) {
+	out.Vel[mod.Target] = out.Vel[mod.Target].Add(mod.Loc.Sub(in.Loc[mod.Target]).Mul(mod.k))
+}
+type KinesinForce struct {
+	k float64
+}
+func NewKinesinForce(k float64) Modifier {
+	kf := new(KinesinForce)
+	kf.k = k
+	return kf
+}
+func (mod *KinesinForce) Act(in, out *poly.Chain) {
+	for i, _ := range in.Loc[1:len(in.Loc)-1] {
+		out.Vel[i+1] = out.Vel[i+1].Add(in.Loc[i].Sub(in.Loc[i+2]).Mul(mod.k))
+	}
+	out.Vel[0] = out.Vel[0].Add(in.Loc[0].Sub(in.Loc[1]).Mul(mod.k))
+	out.Vel[len(out.Vel)-1] = out.Vel[len(out.Vel)-1].Add(in.Loc[len(in.Loc)-2].Sub(in.Loc[len(in.Loc)-1]).Mul(mod.k))
+}
+type ConstForce struct {
+	f *vector.D3
+}
+func NewConstForce(f *vector.D3) Modifier {
+	cf := new(ConstForce)
+	cf.f = f
+	return cf
+}
+func (mod *ConstForce) Act(in, out *poly.Chain) {
+	for i,_ := range in.Loc {
+		out.Vel[i] = out.Vel[i].Add(mod.f)
+	}
 }

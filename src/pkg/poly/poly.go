@@ -82,10 +82,11 @@ func (c *Chain) Print() {
 }
 
 func (c *Chain) ToJSON() string {
-	output := "{"
+	output := "["
 	for _, r := range c.Loc {
 		output += "[" + r.String() + "]" +","
 	}
-	output+= "}"
+	output = output[0:len(output)-1]
+	output+= "]"
 	return output
 }
