@@ -8,7 +8,6 @@ import (
 	"os"
 )
 
-
 func main() {
 	fmt.Printf("Hello, world, again, and again!\n")
 	//chain := poly.NewRandom(8)
