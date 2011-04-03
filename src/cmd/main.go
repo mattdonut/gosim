@@ -10,13 +10,16 @@ import (
 
 func main() {
 	fmt.Printf("Hello, world, again, and again!\n")
-
+	system := make([]*poly.Chain,1)
 	blank := poly.New(64)
+	other := poly.New(64)
 	blank.RandomLoc(vector.NewD3(0,0,0))
-
+	other.RandomLoc(vector.NewD3(1,1,0))
+	system[0] = blank
+	system = append(system, other)
 	fmt.Println(blank.ToJSON())
 	solver := new(solver.RK4)
-	solver.Init(blank)
+	solver.Init(system)
 	
 	file, err := os.Open("polyout.txt", os.O_WRONLY | os.O_CREATE ,0666 )
 	if err != nil {
