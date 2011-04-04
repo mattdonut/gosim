@@ -37,10 +37,12 @@ func (rk *RK4) Init(chains []*poly.Chain) {
 	rk.Mods = make([]Modifier, 1)
 	rk.Mods[0] = NewSpringForce(100)
 	rk.Mods = append(rk.Mods, NewStiffForce(10))
+	rk.Mods = append(rk.Mods, NewOseenTensor(.2,rk.sys[0]))
 	rk.Mods = append(rk.Mods, NewKinesinForce(1))
 	rk.Mods = append(rk.Mods, NewPinForce(100, 0, 0, vector.NewD3(0,0,0)))
-	rk.Mods = append(rk.Mods, NewConstForce(vector.NewD3(0,0,1)))
-	rk.h = .003
+	rk.Mods = append(rk.Mods, NewPinForce(100, 1, 0, vector.NewD3(1,1,0)))
+	//rk.Mods = append(rk.Mods, NewConstForce(vector.NewD3(0,0,1)))
+	rk.h = .001
 	rk.h2 = rk.h/2
 	rk.h6 = rk.h/6
 }
@@ -189,6 +191,50 @@ func (mod *ConstForce) Act(in, out []*poly.Chain) {
 	for n,_ := range in {
 		for i,_ := range in[n].Loc {
 			out[n].Vel[i] = out[n].Vel[i].Add(mod.f)
+		}
+	}
+}
+type OseenTensor struct {
+	k, norm float64
+	vec, dif *vector.D3
+	temp []*poly.Chain
+}
+func NewOseenTensor(k float64, system []*poly.Chain) Modifier {
+	ot := new(OseenTensor)
+	ot.k = k
+	ot.vec = vector.NewD3(0,0,0)
+	ot.temp = make([]*poly.Chain, len(system))
+	for n,chain := range system {
+		ot.temp[n] = poly.New(chain.GetLength())
+	}
+	return ot
+}
+func (mod *OseenTensor) Act(in, out []*poly.Chain) {
+	//madness
+	//for each monomer
+	for n,_ := range in {
+		for i, _ := range in[n].Loc {
+			mod.vec.Zero()
+			for m,_ := range in {
+				for j,_ := range in[m].Loc {
+					if m == n && i == j {
+						mod.vec = mod.vec.Add(in[n].Vel[i])
+						continue
+					}
+					mod.dif = in[m].Loc[j].Sub(in[n].Loc[i])
+					mod.norm = mod.dif.Norm()
+					if mod.norm == 0 {
+						continue
+					}
+					mod.vec = mod.vec.Add( in[m].Vel[j].Add( mod.dif.Mul(mod.dif.Dot(in[m].Vel[j]) ).Mul(1.0/(mod.norm*mod.norm)) ).Mul(mod.k/mod.norm) )
+				}
+			}
+			mod.temp[n].Vel[i].Copy(mod.vec)
+		}
+	}
+	for n,_ := range mod.temp {
+		for i,_ := range mod.temp[n].Vel {
+			out[n].Vel[i].Copy(mod.temp[n].Vel[i])
 		}
 	}
 }

@@ -59,7 +59,12 @@ func (v *D3) Mul(s float64) *D3 {
 func (v *D3) Dot(o *D3) float64 {
 	return v.x*o.x + v.y+o.y + v.z+o.z
 }
-
+func (v *D3) Copy(o *D3) *D3 {
+	v.x = o.x
+	v.y = o.y
+	v.z = o.z
+	return v
+}
 func (v *D3) Normalize() *D3 {
 	res := new(D3)
 	norm := v.Norm()

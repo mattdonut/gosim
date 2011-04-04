@@ -11,8 +11,8 @@ import (
 func main() {
 	fmt.Printf("Hello, world, again, and again!\n")
 	system := make([]*poly.Chain,1)
-	blank := poly.New(64)
-	other := poly.New(64)
+	blank := poly.New(32)
+	other := poly.New(32)
 	blank.RandomLoc(vector.NewD3(0,0,0))
 	other.RandomLoc(vector.NewD3(1,1,0))
 	system[0] = blank
@@ -27,13 +27,25 @@ func main() {
 	}
 	defer file.Close()
 	file.WriteString("[")
-	file.WriteString(blank.ToJSON())
+	file.WriteString("[")
+	for _, poly := range system{
+		file.WriteString(poly.ToJSON())
+		file.WriteString(",")
+	}
+	file.Seek(-1,1)
+	file.WriteString("]")
 	file.WriteString(",")
-	for i := 0; i < 300 ; i++ {
+	for i := 0; i < 1000 ; i++ {
 		solver.Step()
 		if i % 3 == 1{
 			fmt.Println(blank.ToJSON())
-			file.WriteString(blank.ToJSON())
+			file.WriteString("[")
+			for _, poly := range system{
+				file.WriteString(poly.ToJSON())
+				file.WriteString(",")
+			}
+			file.Seek(-1,1)
+			file.WriteString("]")
 			file.WriteString(",")
 		}
 	}
