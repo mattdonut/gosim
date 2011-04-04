@@ -35,7 +35,7 @@ func main() {
 	file.Seek(-1,1)
 	file.WriteString("]")
 	file.WriteString(",")
-	for i := 0; i < 1000 ; i++ {
+	for i := 0; i < 10 ; i++ {
 		solver.Step()
 		if i % 3 == 1{
 			fmt.Println(blank.ToJSON())

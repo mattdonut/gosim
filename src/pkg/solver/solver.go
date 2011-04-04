@@ -195,13 +195,14 @@ func (mod *ConstForce) Act(in, out []*poly.Chain) {
 	}
 }
 type OseenTensor struct {
-	k, norm float64
+	k, norm, clamp float64
 	vec, dif *vector.D3
 	temp []*poly.Chain
 }
 func NewOseenTensor(k float64, system []*poly.Chain) Modifier {
 	ot := new(OseenTensor)
 	ot.k = k
+	ot.clamp = 10
 	ot.vec = vector.NewD3(0,0,0)
 	ot.temp = make([]*poly.Chain, len(system))
 	for n,chain := range system {
@@ -228,6 +229,11 @@ func (mod *OseenTensor) Act(in, out []*poly.Chain) {
 					}
 					mod.vec = mod.vec.Add( in[m].Vel[j].Add( mod.dif.Mul(mod.dif.Dot(in[m].Vel[j]) ).Mul(1.0/(mod.norm*mod.norm)) ).Mul(mod.k/mod.norm) )
 				}
+			}
+			//the force from the fluid saturates to avoid problems with finite timestep
+			mod.norm = mod.vec.Norm()
+			if mod.norm > mod.clamp {
+				mod.vec = mod.vec.Mul(mod.clamp/mod.norm)
 			}
 			mod.temp[n].Vel[i].Copy(mod.vec)
 		}
