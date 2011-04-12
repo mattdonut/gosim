@@ -10,12 +10,14 @@ import (
 
 func main() {
 	fmt.Printf("Hello, world, again, and again!\n")
-	system := make([]*poly.Chain,1)
+	system := make([]*poly.Chain,0)
 	blank := poly.New(32)
 	other := poly.New(32)
+	//third := poly.New(32)
 	blank.RandomLoc(vector.NewD3(0,0,0))
-	other.RandomLoc(vector.NewD3(1,1,0))
-	system[0] = blank
+	other.RandomLoc(vector.NewD3(1,0,0))
+	//third.RandomLoc(vector.NewD3(
+	system = append(system, blank)
 	system = append(system, other)
 	fmt.Println(blank.ToJSON())
 	solver := new(solver.RK4)
@@ -35,10 +37,11 @@ func main() {
 	file.Seek(-1,1)
 	file.WriteString("]")
 	file.WriteString(",")
-	for i := 0; i < 10 ; i++ {
+	for i := 0; i < 3000 ; i++ {
 		solver.Step()
 		if i % 3 == 1{
-			fmt.Println(blank.ToJSON())
+			//fmt.Println(blank.ToJSON())
+			fmt.Println(i)
 			file.WriteString("[")
 			for _, poly := range system{
 				file.WriteString(poly.ToJSON())

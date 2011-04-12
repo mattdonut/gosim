@@ -40,7 +40,7 @@ func (rk *RK4) Init(chains []*poly.Chain) {
 	rk.Mods = append(rk.Mods, NewOseenTensor(.2,rk.sys[0]))
 	rk.Mods = append(rk.Mods, NewKinesinForce(1))
 	rk.Mods = append(rk.Mods, NewPinForce(100, 0, 0, vector.NewD3(0,0,0)))
-	rk.Mods = append(rk.Mods, NewPinForce(100, 1, 0, vector.NewD3(1,1,0)))
+	rk.Mods = append(rk.Mods, NewPinForce(100, 1, 0, vector.NewD3(1,0,0)))
 	//rk.Mods = append(rk.Mods, NewConstForce(vector.NewD3(0,0,1)))
 	rk.h = .001
 	rk.h2 = rk.h/2
@@ -196,7 +196,7 @@ func (mod *ConstForce) Act(in, out []*poly.Chain) {
 }
 type OseenTensor struct {
 	k, norm, clamp float64
-	vec, dif *vector.D3
+	vec, dif, part *vector.D3
 	temp []*poly.Chain
 }
 func NewOseenTensor(k float64, system []*poly.Chain) Modifier {
@@ -227,14 +227,18 @@ func (mod *OseenTensor) Act(in, out []*poly.Chain) {
 					if mod.norm == 0 {
 						continue
 					}
-					mod.vec = mod.vec.Add( in[m].Vel[j].Add( mod.dif.Mul(mod.dif.Dot(in[m].Vel[j]) ).Mul(1.0/(mod.norm*mod.norm)) ).Mul(mod.k/mod.norm) )
+					mod.part = in[m].Vel[j].Add( mod.dif.Mul(mod.dif.Dot(in[m].Vel[j]) ).Mul(1.0/(mod.norm*mod.norm)) ).Mul(mod.k/mod.norm)
+					if force, source := mod.part.Norm(), in[m].Vel[j].Norm(); force > source {
+						mod.part = mod.part.Mul(source/force)
+					}
+					mod.vec = mod.vec.Add( mod.part )
 				}
 			}
 			//the force from the fluid saturates to avoid problems with finite timestep
-			mod.norm = mod.vec.Norm()
-			if mod.norm > mod.clamp {
-				mod.vec = mod.vec.Mul(mod.clamp/mod.norm)
-			}
+			//mod.norm = mod.vec.Norm()
+			//if mod.norm > mod.clamp {
+			//	mod.vec = mod.vec.Mul(mod.clamp/mod.norm)
+			//}
 			mod.temp[n].Vel[i].Copy(mod.vec)
 		}
 	}
