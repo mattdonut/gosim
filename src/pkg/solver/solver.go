@@ -34,15 +34,8 @@ func (rk *RK4) Init(chains []*poly.Chain) {
 		rk.sys[2][i] = poly.New(chain.GetLength())
 		rk.sys[3][i] = poly.New(chain.GetLength())	
 	}
-	rk.Mods = make([]Modifier, 1)
-	rk.Mods[0] = NewSpringForce(100)
-	rk.Mods = append(rk.Mods, NewStiffForce(10))
-	rk.Mods = append(rk.Mods, NewOseenTensor(.2,rk.sys[0]))
-	rk.Mods = append(rk.Mods, NewKinesinForce(1))
-	rk.Mods = append(rk.Mods, NewPinForce(100, 0, 0, vector.NewD3(0,0,0)))
-	rk.Mods = append(rk.Mods, NewPinForce(100, 1, 0, vector.NewD3(1,0,0)))
-	//rk.Mods = append(rk.Mods, NewConstForce(vector.NewD3(0,0,1)))
-	rk.h = .001
+
+	rk.h = .002
 	rk.h2 = rk.h/2
 	rk.h6 = rk.h/6
 }
@@ -100,6 +93,9 @@ func (rk *RK4) Step() []*poly.Chain {
 	}
 	}//end multiplicity loop
 	return rk.sys[0]
+}
+func (rk *RK4) GetSystem() [][]*poly.Chain {
+	return rk.sys
 }
 
 
